@@ -5,13 +5,15 @@ namespace ZainoEasy
     class ZainoMainProgram
     {
         // --- DATI DI INPUT ---
-        static int[] pesi = [ 11, 27, 13, 7, 40 ]; // Array dei pesi generati
+        static int[] pesi = [11, 27, 13, 7, 40]; // Array dei pesi generati
+        static int[] valori = [10, 28, 10, 9, 50];
 
         // private static int[] pesi;
         static int capacita = 50; // Capacità massima dello zaino
         
         // --- STATO DELL'ALGORITMO (Record) ---
         static int spazioOccupatoOttimo = 0;    // Il miglior peso totale trovato finora
+        static int valoreOttimo = 0;
         static bool[] risultatoOttimo;// Array per memorizzare la combinazione vincente
 
         // --- VARIABILI DI ANALISI (Per la spiegazione ai ragazzi) ---
@@ -19,7 +21,6 @@ namespace ZainoEasy
 
         static void Main(string[] args)
         {
-            
             Console.Title = "Analizzatore Algoritmico - Subset Sum Problem";
             Console.WriteLine("=== SISTEMA DI OTTIMIZZAZIONE CARICO (Backtracking + B&B) ===");
 
@@ -35,17 +36,18 @@ namespace ZainoEasy
             // 4. AVVIO RICERCA RICORSIVA
             // Partiamo dall'indice 0, con peso 0 e l'array di scelte vuoto
             // EseguiRicerca(0, 0, sceltaCorrente);
-            EseguiRicercaBase(0, 0, sceltaCorrente); // Per confronto con l'algoritmo puro
+            EseguiRicercaBase(0, 0, 0, sceltaCorrente); // Per confronto con l'algoritmo puro
 
+            TimeSpan fineProcesso = DateTime.Now - inizio;
             for (int i = 0; i < pesi.Length; i++)
             {
-                Console.WriteLine(risultatoOttimo[i] ? $"{pesi[i]} [X] " : $"{pesi[i]} [ ] ");
+                Console.WriteLine(risultatoOttimo[i] ? $"{pesi[i]} {valori[i]} [X] " : $"{pesi[i]} {valori[i]} [ ] ");
             }
-
+            Console.WriteLine($"Tempo di calcolo:{fineProcesso:g}");
         }
 
         // --- ALGORITMO PURO (SENZA BRANCH & BOUND) ---
-        static void EseguiRicercaBase(int indice, int pesoCorrente, bool[] risultato)
+        static void EseguiRicercaBase(int indice, int pesoCorrente, int valoreCorrente, bool[] risultato)
         {
             nodiVisitati++; // Contiamo ogni singolo tentativo
 
@@ -53,9 +55,11 @@ namespace ZainoEasy
             if (indice == pesi.Length)
             {
                 // Abbiamo trovato una combinazione valida finale?
-                if (pesoCorrente > spazioOccupatoOttimo)
+                // if (pesoCorrente > spazioOccupatoOttimo)
+                if (valoreCorrente > valoreOttimo)
                 {
                     spazioOccupatoOttimo = pesoCorrente;
+                    valoreOttimo = valoreCorrente;
                     Array.Copy(risultato, risultatoOttimo, risultato.Length); // Foto della soluzione
                 }
                 return;
@@ -65,52 +69,12 @@ namespace ZainoEasy
             if (pesoCorrente + pesi[indice] <= capacita)
             {
                 risultato[indice] = true;
-                EseguiRicercaBase(indice + 1, pesoCorrente + pesi[indice], risultato);
+                EseguiRicercaBase(indice + 1, pesoCorrente + pesi[indice], valoreCorrente + valori[indice], risultato);
             }
 
             // RAMO 2: NON PRENDO L'OGGETTO
             risultato[indice] = false;
-            EseguiRicercaBase(indice + 1, pesoCorrente, risultato);
-        }
-
-        static void MostraReportEfficienza(TimeSpan durata)
-        {
-            // Calcolo combinazioni teoriche totali (2^(n+1)-1)
-            double nodiTeorici = Math.Pow(2, pesi.Length + 1) - 1;
-            double risparmioPerc = (1 - nodiVisitati / nodiTeorici) * 100;
-            long nodiRisparmiati = (long)nodiTeorici - nodiVisitati;
-
-            Console.WriteLine(new string('=', 60));
-            Console.WriteLine("REPORT DI OTTIMIZZAZIONE");
-            Console.WriteLine(new string('-', 60));
-            Console.WriteLine($"Tempo di calcolo          : {durata.TotalMilliseconds} ms");
-            Console.WriteLine($"Peso Ottimo trovato       : {spazioOccupatoOttimo} / {capacita}");
-            Console.WriteLine($"Nodi visitati (Reali)     : {nodiVisitati:N0}");
-            Console.WriteLine($"Nodi teorici (Senza B&B)  : {nodiTeorici:N0}");
-            Console.WriteLine($"Nodi non esplorati (Poto) : {nodiRisparmiati:N0}");
-
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine($"EFFICIENZA BRANCH & BOUND : {risparmioPerc:F8}%");
-            Console.ResetColor();
-            Console.WriteLine(new string('=', 60));
-
-            Console.WriteLine("\nVISUALIZZAZIONE SCELTE (Verde = Nello zaino):");
-            for (int i = 0; i < pesi.Length; i++)
-            {
-                if (risultatoOttimo[i])
-                {
-                    Console.ForegroundColor = ConsoleColor.Green;
-                    Console.WriteLine($" [X] Elemento {i:D2}: peso {pesi[i]}");
-                }
-                else
-                {
-                    Console.ResetColor();
-                    Console.WriteLine($" [ ] Elemento {i:D2}: peso {pesi[i]}");
-                }
-            }
-            Console.ResetColor();
-            Console.WriteLine("\nPremi un tasto per uscire...");
-            Console.ReadKey();
+            EseguiRicercaBase(indice + 1, pesoCorrente, valoreCorrente, risultato);
         }
     }
 }
