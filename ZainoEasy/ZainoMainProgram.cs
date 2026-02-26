@@ -52,7 +52,8 @@ namespace ZainoEasy
 
             // 4. AVVIO RICERCA RICORSIVA
             // Partiamo dall'indice 0, con peso 0 e l'array di scelte vuoto
-            EseguiRicerca(0, 0, sceltaCorrente);
+            // EseguiRicerca(0, 0, sceltaCorrente);
+            EseguiRicercaBase(0, 0, sceltaCorrente); // Per confronto con l'algoritmo puro
 
             DateTime fine = DateTime.Now;
             TimeSpan tempoImpiegato = fine - inizio;
@@ -102,6 +103,37 @@ namespace ZainoEasy
             scelta[indice] = false;
             EseguiRicerca(indice + 1, pesoCorrente, scelta);
         }
+        // --- ALGORITMO PURO (SENZA BRANCH & BOUND) ---
+        static void EseguiRicercaBase(int indice, int pesoCorrente, bool[] scelta)
+        {
+            nodiVisitati++; // Contiamo ogni singolo tentativo
+
+            // CASO BASE: Siamo arrivati in fondo all'array (Foglia)
+            if (indice == n)
+            {
+                // Abbiamo trovato una combinazione valida finale?
+                if (pesoCorrente > pesoOttimo)
+                {
+                    pesoOttimo = pesoCorrente;
+                    Array.Copy(scelta, soluzioneOttima, n); // Foto della soluzione
+                }
+                return;
+            }
+
+            // QUI MANCA IL "BOUND": Non controlliamo se ha senso continuare.
+            // Andiamo avanti alla cieca.
+
+            // RAMO 1: PROVO A PRENDERE L'OGGETTO (Se ci sta)
+            if (pesoCorrente + pesi[indice] <= capacitaMax)
+            {
+                scelta[indice] = true;
+                EseguiRicercaBase(indice + 1, pesoCorrente + pesi[indice], scelta);
+            }
+
+            // RAMO 2: NON PRENDO L'OGGETTO
+            scelta[indice] = false;
+            EseguiRicercaBase(indice + 1, pesoCorrente, scelta);
+        }
 
         // Calcola la somma di tutti i pesi non ancora valutati (stima ottimistica)
         static int SommaRimanente(int start)
@@ -116,16 +148,17 @@ namespace ZainoEasy
             pesi = new int[n];
             Random rnd = new Random();
             // Ogni peso sarà tra 1 e il 40% della capacità per rendere il problema "denso"
-            int maxPesoOggetto = (int)(capacitaMax * 0.4) + 2;
+            int maxPesoOggetto = (int)(capacitaMax * 0.4) + 2; // Il +2 (e non il +1) è per evitare di generare pesi troppo piccoli che non sfruttano bene la capacità
 
             for (int i = 0; i < n; i++) pesi[i] = rnd.Next(1, maxPesoOggetto);
 
             // ORDINAMENTO DECRESCENTE: Fondamentale per far funzionare bene il Bound.
             // Pesi grandi all'inizio = record alto subito = più rami tagliati.
-            Array.Sort(pesi);
-            Array.Reverse(pesi);
+            // Array.Sort(pesi);
+            // Array.Reverse(pesi);
 
-            Console.WriteLine("\nPesi generati (ordinati per efficienza):");
+            // Console.WriteLine("\nPesi generati (ordinati per efficienza):");
+            Console.WriteLine("\nPesi generati :");
             foreach (int p in pesi) Console.Write($"[{p}] ");
             Console.WriteLine("\n");
         }
